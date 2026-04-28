@@ -322,13 +322,15 @@ void keyboard(int key)
    case 203://baixo
 	   direcaoTeclado = 3;
 	   break;
+   case 114://r = reinicio
+	   jogo.inicializar(screenWidth, screenHeight);
    default:
 	   direcaoTeclado = -1;
 	   break;
    }
 
    if (key == 32) { // ESPAÇO
-	   jogo.jogador.atirar();
+	   jogo.jogador.atirando = true;
    }
 }
 
@@ -336,6 +338,9 @@ void keyboard(int key)
 void keyboardUp(int key)
 {
 	pressTeclado = false;
+	if (key == 32) {
+		jogo.jogador.atirando = false; // Desliga o gatilho
+	}
    //printf("\nLiberou: %d" , key);
 }
 

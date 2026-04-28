@@ -10,6 +10,9 @@ public:
     float x, y;
     float width, height;
     float velocidade;
+    float tempoRecarga = 0.2f;  
+    float cronometroTiro = 0.0f;
+    bool atirando;
     Vector2 direcaoMovimento;
 
     // 3 Vetores de direção para os canhões
@@ -25,7 +28,7 @@ public:
         height = 40.0f;
         velocidade = 300.0f; // 300 pixels por segundo
         ativo = true;
-
+        atirando = false;
         direcaoMovimento.set(0, 0); // Fica parado inicialmente
         
         // Configura os ângulos dos 3 canhões 
@@ -52,11 +55,11 @@ public:
 
     void atirar() {
         // Dispara 3 tiros simultâneos usando as direções dos canhões
-        float centroX = x + (width / 2.0f) - 2.0f; // Centraliza a bala
+        float centroX = x + (width / 2.0f);
         float topoY = y + height;
 
         disparos.push_back(Projetil(centroX, topoY, canhaoEsq, 500.0f));
-        disparos.push_back(Projetil(centroX, topoY, canhaoCent, 600.0f));
+        disparos.push_back(Projetil(centroX, topoY, canhaoCent, 500.0f));
         disparos.push_back(Projetil(centroX, topoY, canhaoDir, 500.0f));
     }
 
@@ -69,6 +72,15 @@ public:
         // Limita o jogador dentro da tela visível
         if (x < 0) x = 0;
         if (x + width > screenWidth) x = screenWidth - width;
+
+        if (cronometroTiro < tempoRecarga) {
+            cronometroTiro += dt;
+        }
+
+        if (atirando && cronometroTiro >= tempoRecarga) {
+            atirar();               // Chama sua função que adiciona os 3 tiros no vector
+            cronometroTiro = 0.0f;  // Reseta o cronômetro
+        }
 
         // Atualiza os disparos
         for (int i = 0; i < disparos.size(); i++) {
@@ -93,6 +105,27 @@ public:
         // Desenha o Jogador (Retângulo Azul)
         CV::color(4);
         CV::rectFill(x, y, x + width, y + height);
+
+        float tamanhoCanhao = 20.0f; // Comprimento visual da linha do canhão
+        CV::color(1); // Escolha uma cor (ex: branco ou cinza)
+
+        float origemX = x + (width / 2.0f);
+        float origemY = y + height;
+
+        // Canhão Central
+        CV::line(origemX, origemY,
+            origemX + canhaoCent.x * tamanhoCanhao,
+            origemY + canhaoCent.y * tamanhoCanhao);
+
+        // Canhão Direito 
+        CV::line(origemX, origemY,
+            origemX + canhaoDir.x * tamanhoCanhao,
+            origemY + canhaoDir.y * tamanhoCanhao);
+
+        // Canhão Esquerdo
+        CV::line(origemX, origemY,
+            origemX + canhaoEsq.x * tamanhoCanhao,
+            origemY + canhaoEsq.y * tamanhoCanhao);
     }
 };
 
