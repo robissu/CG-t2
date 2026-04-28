@@ -20,8 +20,9 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-
+#include "Jogo.h"
 #include "gl_canvas2d.h"
+#include <ctime>
 
 
 #define _CRT_SECURE_NO_WARNINGS
@@ -37,12 +38,16 @@ int raio = 60;
 float passo = 2 * PI / 12;
 int direcaoTeclado = -1;
 bool pressTeclado = false;
-
+Jogo jogo;
 //funcao chamada continuamente. Deve-se controlar o que desenhar por meio de variaveis globais
 //Todos os comandos para desenho na canvas devem ser chamados dentro da render().
 //Deve-se manter essa função com poucas linhas de codigo.
 
 Vector2 pts[4];
+void setInicio() {
+	jogo.inicializar(screenWidth, screenHeight);
+}
+
 
 void desenhaCart() {
 	
@@ -139,7 +144,6 @@ void testAngulo() {
 
 }
 
-
 void questaop1() {
 	desenhaQuadrado(1);
 
@@ -183,7 +187,6 @@ void drawBlending() {
 		CV::color(0);
 		CV::point(x, y4);
 	}
-
 }
 Vector2 arr[4];
 
@@ -215,38 +218,70 @@ void bSpline() {
 	//blending f
 	float x = 0;
 	for (float t = 0; t < 1; t += 0.01) {
-		float y1 = 1/6 * (1 - t) * (1 - t) * (1 - t);
+		float y1 = 1.0f/6.0f * (1 - t) * (1 - t) * (1 - t);
 		y1 = y1 * 200;
 		x = x + 1;
 		CV::color(0);
 		CV::point(x, y1);
 
-		float y2 = 1/6 * ((3 * t * t * t) - (6 * t * t) + 4);
+		float y2 = 1.0f / 6.0f * ((3 * t * t * t) - (6 * t * t) + 4);
 		y2 = y2 * 200;
 		CV::color(0);
 		CV::point(x, y2);
 
-		float y3 = 1/6 * ((- 3 * t * t * t) + (3*t*t) + (3*t) + 1);
+		float y3 = 1.0f / 6.0f * ((- 3 * t * t * t) + (3*t*t) + (3*t) + 1);
 		y3 = y3 * 200;
 		CV::color(0);
 		CV::point(x, y3);
 
-		float y4 = 1/6*(t * t * t);
+		float y4 = 1.0f / 6.0f *(t * t * t);
 		y4 = y4 * 200;
 		CV::color(0);
 		CV::point(x, y4);
 	}
 }
 
+void drawSpline() {
 
+	CV::color(0);
+	for (float t = 0; t < 1; t += 0.001) {
+		float t0 = 1.0f / 6.0f * (1 - t) * (1 - t) * (1 - t);
+		float t1 = 1.0f / 6.0f * ((3 * t * t * t) - (6 * t * t) + 4);
+		float t2 = 1.0f / 6.0f * ((-3 * t * t * t) + (3 * t * t) + (3 * t) + 1);
+		float t3 = 1.0f / 6.0f * (t * t * t);
+
+		Vector2 ponto = (arr[0] * t0) + (arr[1] * t1) + (arr[2] * t2) + (arr[3] * t3);
+		CV::point(ponto);
+	}
+
+}
 
 void render()
 {
-	CV::translate(screenWidth / 2, screenHeight / 2);
+	CV::clear(0, 0, 0);
+	if (pressTeclado) {
+		if (direcaoTeclado == 0) jogo.jogador.direcaoMovimento.set(-1, 0); // Esq
+		if (direcaoTeclado == 2) jogo.jogador.direcaoMovimento.set(1, 0);  // Dir
+	}
+	else {
+		jogo.jogador.direcaoMovimento.set(0, 0); // Para o jogador
+	}
+
+	jogo.executarLoop();
+
+
+
+
+
+	//CV::translate(screenWidth / 2, screenHeight / 2);
 	//drawBlending();
 	//drawControlPoints();
 	//drawBezier();
-	bSpline();
+
+	//bSpline();
+	//drawControlPoints();
+	//drawSpline();
+
 
 	//desenhaCart();
 	//maquita();
@@ -259,13 +294,13 @@ void render()
 	//questaop1();
 	
 
-    Sleep(10); //nao eh controle de FPS. Somente um limitador de FPS.
+    //Sleep(10); //nao eh controle de FPS. Somente um limitador de FPS.
 }
 
 //funcao chamada toda vez que uma tecla for pressionada.
 void keyboard(int key)
 {
-   printf("\nTecla: %d" , key);
+   //printf("\nTecla: %d" , key);
    if( key < 200 )
    {
       opcao = key;
@@ -291,13 +326,17 @@ void keyboard(int key)
 	   direcaoTeclado = -1;
 	   break;
    }
+
+   if (key == 32) { // ESPAÇO
+	   jogo.jogador.atirar();
+   }
 }
 
 //funcao chamada toda vez que uma tecla for liberada
 void keyboardUp(int key)
 {
 	pressTeclado = false;
-   printf("\nLiberou: %d" , key);
+   //printf("\nLiberou: %d" , key);
 }
 
 //funcao para tratamento de mouse: cliques, movimentos e arrastos
@@ -305,7 +344,7 @@ void mouse(int button, int state, int wheel, int direction, int x, int y)
 {
    mouseX = x; //guarda as coordenadas do mouse para exibir dentro da render()
    mouseY = y;
-   arr[1].set(mouseX, mouseY);
+   //arr[1].set(mouseX, mouseY);
    //printf("\nmouse %d %d %d %d %d %d", button, state, wheel, direction,  x, y);
 
    if( state == 0 ) //clicou
@@ -318,11 +357,13 @@ void mouse(int button, int state, int wheel, int direction, int x, int y)
 
 int main(void)
 {
-	arr[0] = Vector2(100, 100);
-	arr[1] = Vector2(200, 500);
-	arr[2] = Vector2(300, 200);
-	arr[3] = Vector2(400, 300);
-    CV::init(&screenWidth, &screenHeight, "Titulo da Janela: Canvas 2D - Pressione 1, 2, 3");
+	//arr[0] = Vector2(100, 100);
+	//arr[1] = Vector2(200, 500);
+	//arr[2] = Vector2(300, 200);
+	//arr[3] = Vector2(400, 300);
+	srand(time(NULL));
+    CV::init(&screenWidth, &screenHeight, "Trabalho 2 - Robson Daniel Marchesan");
+	setInicio();
     CV::run();
 
   

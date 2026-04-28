@@ -73,6 +73,11 @@ public:
 
        return graus;
    }
+
+   void moverPonto(float& px, float& py, float velocidade, float dt) {
+       px += this->x * velocidade * dt;
+       py += this->y * velocidade * dt;
+   }
 };
 
 #endif
