@@ -78,6 +78,10 @@ public:
        px += this->x * velocidade * dt;
        py += this->y * velocidade * dt;
    }
+
+   float magnitude() {
+       return sqrt(x * x + y * y);
+   }
 };
 
 #endif

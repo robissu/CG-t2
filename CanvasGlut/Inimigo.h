@@ -17,7 +17,6 @@ public:
     Vector2 direcaoMovimento;
     Vector2 canhao; // 1 vetor de disparo
 
-    std::vector<Projetil> disparos;
     bool ativo;
 
     Inimigo() {
@@ -42,42 +41,26 @@ public:
             y + height > oY);
     }
 
-    void atirar() {
+    void atirar(std::vector<Projetil>& disparosJogadorInimigos) {
         float centroX = x + (width / 2.0f) - 2.0f;
         float baseY = y;
-        disparos.push_back(Projetil(centroX, baseY, canhao, 150.0f));
+        disparosJogadorInimigos.push_back(Projetil(centroX, baseY, canhao, 150.0f, false));
     }
 
-    void atualizar(float dt, float screenWidth, float alturaCenario) {
+    void atualizar(float dt, float screenWidth, float alturaCenario, std::vector<Projetil>& disparosJogadorInimigos) {
         if (!ativo) return;
 
         direcaoMovimento.moverPonto(x, y, velocidade, dt);
 
         cronometroTiro += dt;
         if (cronometroTiro >= tempoRecarga && (y + height) < (alturaCenario/10)) {
-            atirar();               
+            atirar(disparosJogadorInimigos);
             cronometroTiro = 0;     
-        }
-
-        // Atualiza disparos
-        for (int i = 0; i < disparos.size(); i++) {
-            disparos[i].atualizar(dt);
-
-            // Remove se saiu por baixo da tela
-            if (disparos[i].y < 0 || !disparos[i].ativo) {
-                disparos.erase(disparos.begin() + i);
-                i--;
-            }
         }
     }
 
     void desenhar() {
         if (!ativo) return;
-
-        // Desenha tiros
-        for (int i = 0; i < disparos.size(); i++) {
-            disparos[i].desenhar(2); // Vermelho
-        }
 
         // Desenha inimigo (Retângulo Vermelho Escuro)
         CV::color(9);

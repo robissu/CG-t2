@@ -18,8 +18,12 @@ public:
     // Controle de FPS / Delta Time
     Frames* frames;
     float fpsReal;
+
     Jogador jogador;
     std::vector<Inimigo> inimigos;
+
+    std::vector<Projetil> disparosJogador;
+    std::vector<Projetil> disparosInimigos;
 
     Jogo() {
     }
@@ -29,7 +33,8 @@ public:
         scrHeight = h;
 
         inimigos.clear();           
-        jogador.disparos.clear();   
+        disparosJogador.clear();   
+        disparosInimigos.clear();  
         pontuacao = 0;              
 
         frames = new Frames();
@@ -88,10 +93,10 @@ public:
     }
 
     void atualizarLogica(float dt) {
-        jogador.atualizar(dt, scrWidth, alturaCenario);
+        jogador.atualizar(dt, scrWidth, alturaCenario, disparosJogador);
 
         for (int i = 0; i < inimigos.size(); i++) {
-            inimigos[i].atualizar(dt, scrWidth, alturaCenario);
+            inimigos[i].atualizar(dt, scrWidth, alturaCenario, disparosInimigos);
 
             // Remove inimigo se ele passou do fundo da tela ou morreu
             if (inimigos[i].y < -50.0f || !inimigos[i].ativo) {
@@ -99,19 +104,37 @@ public:
                 i--;
             }
         }
+
+        // 1. Atualiza os Projéteis do Jogador
+        for (int i = 0; i < disparosJogador.size(); i++) {
+            disparosJogador[i].atualizar(dt);
+            if (disparosJogador[i].y > alturaCenario || disparosJogador[i].x < 0 || disparosJogador[i].x > scrWidth || !disparosJogador[i].ativo) {
+                disparosJogador.erase(disparosJogador.begin() + i);
+                i--;
+            }
+        }
+
+        // 2. Atualiza os Projéteis dos Inimigos
+        for (int i = 0; i < disparosInimigos.size(); i++) {
+            disparosInimigos[i].atualizar(dt);
+            if (disparosInimigos[i].y < 0 || !disparosInimigos[i].ativo) {
+                disparosInimigos.erase(disparosInimigos.begin() + i);
+                i--;
+            }
+        }
     }
 
     void checarColisoes() {
         // 1. Checa se algum TIRO DO JOGADOR acertou um INIMIGO
-        for (int t = 0; t < jogador.disparos.size(); t++) {
-            if (!jogador.disparos[t].ativo) continue;
+        for (int t = 0; t < disparosJogador.size(); t++) {
+            if (!disparosJogador[t].ativo) continue;
 
             for (int i = 0; i < inimigos.size(); i++) {
                 if (!inimigos[i].ativo) continue;
 
-                if (inimigos[i].y < scrHeight && inimigos[i].checaColisao(jogador.disparos[t].x, jogador.disparos[t].y, jogador.disparos[t].width, jogador.disparos[t].height)) {
+                if (inimigos[i].y < scrHeight && inimigos[i].checaColisao(disparosJogador[t].x, disparosJogador[t].y, disparosJogador[t].width, disparosJogador[t].height)) {
                     inimigos[i].ativo = false;      // Mata Inimigo
-                    jogador.disparos[t].ativo = false; // Destrói bala
+                    disparosJogador[t].ativo = false; // Destrói bala
                     pontuacao++;
                     break;
                 }
@@ -121,11 +144,11 @@ public:
         // 2. Checa se algum TIRO DO INIMIGO acertou o JOGADOR
         if (jogador.ativo) {
             for (int i = 0; i < inimigos.size(); i++) {
-                for (int t = 0; t < inimigos[i].disparos.size(); t++) {
-                    if (!inimigos[i].disparos[t].ativo) continue;
+                for (int t = 0; t < disparosInimigos.size(); t++) {
+                    if (!disparosInimigos[t].ativo) continue;
 
-                    if (jogador.checaColisao(inimigos[i].disparos[t].x, inimigos[i].disparos[t].y, inimigos[i].disparos[t].width, inimigos[i].disparos[t].height)) {
-                        inimigos[i].disparos[t].ativo = false;
+                    if (jogador.checaColisao(disparosInimigos[t].x, disparosInimigos[t].y, disparosInimigos[t].width, disparosInimigos[t].height)) {
+                        disparosInimigos[t].ativo = false;
                         vidas--;
 
                         if (vidas <= 0) {
@@ -142,18 +165,32 @@ public:
 
     void desenhar() {
         jogador.desenhar();
+
         for (int i = 0; i < inimigos.size(); i++) {
             inimigos[i].desenhar();
+        }
+
+        // Desenha todos os projéteis centralizados
+        for (int i = 0; i < disparosJogador.size(); i++) {
+            disparosJogador[i].desenhar(2); // Cor 2 para os tiros do jogador
+        }
+        for (int i = 0; i < disparosInimigos.size(); i++) {
+            disparosInimigos[i].desenhar(2); // Cor 2 para os tiros dos inimigos
         }
 
         CV::color(1); 
         char buffer[30];
         snprintf(buffer, sizeof(buffer), "Placar: %d", pontuacao);
-        CV::text(20, scrHeight - 30, buffer); 
+        CV::text(20, 20, buffer); 
+
+        // VIDAS 
+        char bufferVidas[30];
+        snprintf(bufferVidas, sizeof(bufferVidas), "Vidas: %d", vidas);
+        CV::text(150, 20, bufferVidas); 
 
         char bufferFPS[20];
         snprintf(bufferFPS, sizeof(bufferFPS), "FPS: %.1f", fpsReal);
-        CV::text(scrWidth - 120, scrHeight - 30, bufferFPS);
+        CV::text(scrWidth - 120, 20, bufferFPS);
 
         if (gameOver) {
             CV::color(2); // Vermelho

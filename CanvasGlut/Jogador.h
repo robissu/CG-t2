@@ -20,7 +20,6 @@ public:
     Vector2 canhaoCent;
     Vector2 canhaoDir;
 
-    std::vector<Projetil> disparos;
     bool ativo;
 
     Jogador() {
@@ -53,17 +52,17 @@ public:
             y + height > oY);
     }
 
-    void atirar() {
+    void atirar(std::vector<Projetil>& disparosJogador) {
         // Dispara 3 tiros simultâneos usando as direções dos canhões
         float centroX = x + (width / 2.0f);
         float topoY = y + height;
 
-        disparos.push_back(Projetil(centroX, topoY, canhaoEsq, 500.0f));
-        disparos.push_back(Projetil(centroX, topoY, canhaoCent, 500.0f));
-        disparos.push_back(Projetil(centroX, topoY, canhaoDir, 500.0f));
+        disparosJogador.push_back(Projetil(centroX, topoY, canhaoEsq, 500.0f, (rand()% 100 < 20)));
+        disparosJogador.push_back(Projetil(centroX, topoY, canhaoCent, 500.0f, false));
+        disparosJogador.push_back(Projetil(centroX, topoY, canhaoDir, 500.0f, false));
     }
 
-    void atualizar(float dt, float screenWidth, float alturaCenario) {
+    void atualizar(float dt, float screenWidth, float alturaCenario, std::vector<Projetil>& disparosJogador) {
         if (!ativo) return;
 
         // Move o jogador usando o Vector2
@@ -78,29 +77,13 @@ public:
         }
 
         if (atirando && cronometroTiro >= tempoRecarga) {
-            atirar();               // Chama sua função que adiciona os 3 tiros no vector
-            cronometroTiro = 0.0f;  // Reseta o cronômetro
-        }
-
-        // Atualiza os disparos
-        for (int i = 0; i < disparos.size(); i++) {
-            disparos[i].atualizar(dt);
-
-            // Remove o tiro se sair da tela ou do cenário (limite Y superior)
-            if (disparos[i].y > alturaCenario || disparos[i].x < 0 || disparos[i].x > screenWidth || !disparos[i].ativo) {
-                disparos.erase(disparos.begin() + i);
-                i--; // Ajusta o índice após a remoção
-            }
+            atirar(disparosJogador);               // Chama sua função que adiciona os 3 tiros no vector
+            cronometroTiro = 0.0f;                 // Reseta o cronômetro
         }
     }
 
     void desenhar() {
         if (!ativo) return;
-
-        // Desenha os disparos
-        for (int i = 0; i < disparos.size(); i++) {
-            disparos[i].desenhar(2); // Vermelho
-        }
 
         // Desenha o Jogador (Retângulo Azul)
         CV::color(4);
