@@ -29,9 +29,6 @@
     <ClInclude Include="Vector2.h">
       <Filter>Arquivos de Origem</Filter>
     </ClInclude>
-    <ClInclude Include="Botao.h">
-      <Filter>Arquivos de Origem</Filter>
-    </ClInclude>
     <ClInclude Include="Projetil.h">
       <Filter>Arquivos de Origem</Filter>
     </ClInclude>
@@ -48,6 +45,9 @@
       <Filter>Arquivos de Origem</Filter>
     </ClInclude>
     <ClInclude Include="Animacao.h">
+      <Filter>Arquivos de Origem</Filter>
+    </ClInclude>
+    <ClInclude Include="Bmp.h">
       <Filter>Arquivos de Origem</Filter>
     </ClInclude>
   </ItemGroup>

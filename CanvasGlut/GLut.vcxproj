@@ -175,7 +175,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Animacao.h" />
-    <ClInclude Include="Botao.h" />
+    <ClInclude Include="Bmp.h" />
     <ClInclude Include="Frames.h" />
     <ClInclude Include="gl_canvas2d.h" />
     <ClInclude Include="Inimigo.h" />

@@ -8,7 +8,7 @@
 class Jogador {
 public:
     float x, y;
-    float width, height;
+    float width, height, raio;
     float velocidade;
     float tempoRecarga = 0.2f;  
     float cronometroTiro = 0.0f;
@@ -25,6 +25,7 @@ public:
     Jogador() {
         width = 40.0f;
         height = 40.0f;
+        raio = 20.0f;
         velocidade = 300.0f; // 300 pixels por segundo
         ativo = true;
         atirando = false;
@@ -51,6 +52,27 @@ public:
             y < oY + oHeight &&
             y + height > oY);
     }
+
+    bool checaColisaoCircular(float pontoX, float pontoY) {
+        // Calcula o centro do círculo (assumindo que x,y é o canto inferior esquerdo)
+        float centroX = x + raio;
+        float centroY = y + raio;
+
+        float distSq = (centroX - pontoX) * (centroX - pontoX) + (centroY - pontoY) * (centroY - pontoY);
+        return distSq < (raio * raio); // Colisão com um ponto (tiro)
+    }
+
+    bool colideCom(float outroX, float outroY, float outroRaio) {
+        float c1X = x + raio;
+        float c1Y = y + raio;
+        float c2X = outroX + outroRaio;
+        float c2Y = outroY + outroRaio;
+
+        float distSq = (c1X - c2X) * (c1X - c2X) + (c1Y - c2Y) * (c1Y - c2Y);
+        float somaRaios = raio + outroRaio;
+        return distSq < (somaRaios * somaRaios);
+    }
+
 
     void atirar(std::vector<Projetil>& disparosJogador) {
         // Dispara 3 tiros simultâneos usando as direções dos canhões
@@ -86,8 +108,8 @@ public:
         if (!ativo) return;
 
         // Desenha o Jogador (Retângulo Azul)
-        CV::color(4);
-        CV::rectFill(x, y, x + width, y + height);
+        //CV::color(4);
+        //CV::rectFill(x, y, x + width, y + height);
 
         float tamanhoCanhao = 20.0f; // Comprimento visual da linha do canhão
         CV::color(1); // Escolha uma cor (ex: branco ou cinza)

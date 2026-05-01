@@ -10,10 +10,11 @@
 class Inimigo {
 public:
     float x, y;
-    float width, height;
+    float width, height, raio;
     float velocidade;
     float cronometroTiro = 0;
     float tempoRecarga = 1.5f;
+
     Vector2 direcaoMovimento;
     Vector2 canhao; // 1 vetor de disparo
 
@@ -22,6 +23,7 @@ public:
     Inimigo() {
         width = 30.0f;
         height = 30.0f;
+        raio = 15.0f;
         velocidade = 30.0f; // Mais lento que o jogador
         ativo = true;
 
@@ -41,20 +43,28 @@ public:
             y + height > oY);
     }
 
+    bool checaColisaoCircular(float pontoX, float pontoY) {
+        // Calcula o centro do círculo (assumindo que x,y é o canto inferior esquerdo)
+        float centroX = x + raio;
+        float centroY = y + raio;
+
+        float distSq = (centroX - pontoX) * (centroX - pontoX) + (centroY - pontoY) * (centroY - pontoY);
+        return distSq < (raio * raio); // Colisão com um ponto (tiro)
+    }
     void atirar(std::vector<Projetil>& disparosJogadorInimigos) {
         float centroX = x + (width / 2.0f) - 2.0f;
         float baseY = y;
         disparosJogadorInimigos.push_back(Projetil(centroX, baseY, canhao, 150.0f, false));
     }
 
-    void atualizar(float dt, float screenWidth, float alturaCenario, std::vector<Projetil>& disparosJogadorInimigos) {
+    void atualizar(float dt, float screenWidth, float alturaCenario, std::vector<Projetil>& disparosInimigos) {
         if (!ativo) return;
 
         direcaoMovimento.moverPonto(x, y, velocidade, dt);
 
         cronometroTiro += dt;
         if (cronometroTiro >= tempoRecarga && (y + height) < (alturaCenario/10)) {
-            atirar(disparosJogadorInimigos);
+            atirar(disparosInimigos);
             cronometroTiro = 0;     
         }
     }
@@ -63,8 +73,8 @@ public:
         if (!ativo) return;
 
         // Desenha inimigo (Retângulo Vermelho Escuro)
-        CV::color(9);
-        CV::rectFill(x, y, x + width, y + height);
+        //CV::color(9);
+        //CV::rectFill(x, y, x + width, y + height);
     }
 };
 

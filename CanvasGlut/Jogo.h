@@ -7,6 +7,7 @@
 #include "Inimigo.h"
 #include "Frames.h"
 #include "Animacao.h"
+#include "Bmp.h"
 
 class Jogo {
 public:
@@ -20,7 +21,10 @@ public:
     float fpsReal;
 
     Jogador jogador;
+    Bmp* imgJogador;
+
     std::vector<Inimigo> inimigos;
+    Bmp* imgInimigo;
 
     std::vector<Projetil> disparosJogador;
     std::vector<Projetil> disparosInimigos;
@@ -29,13 +33,48 @@ public:
     Jogo() {
     }
 
+    void gerarOnda(int quantidade, float& offsetY) {
+        float variacaoX = 30.0f;
+        float variacaoY = 40.0f;
+        int colunas = 6;
+
+        for (int i = 0; i < quantidade; i++) {
+            Inimigo ini;
+
+            float baseX = 50.0f + (i % colunas) * 90.0f;
+            float baseY = offsetY + (i / colunas) * 130.0f;
+
+            ini.x = baseX + (rand() % (int)(variacaoX * 2)) - variacaoX;
+            ini.y = baseY + (rand() % (int)(variacaoY * 2)) - variacaoY;
+
+            // tempo de recarga entre 1.0 e 3.0 segundos
+            ini.tempoRecarga = 1.0f + (rand() % 200) / 100.0f;
+
+            // Mantém os inimigos prontos para atirar assim que aparecem
+            ini.cronometroTiro = (0.8f + (rand() % 20) / 100.0f) * ini.tempoRecarga;
+
+            inimigos.push_back(ini);
+        }
+
+        // Cálculo exato de linhas para evitar vácuos excessivos
+        int linhas = (quantidade + colunas - 1) / colunas;
+        offsetY += linhas * 130.0f;
+    }
+
+
     void inicializar(int w, int h) {
         scrWidth = w;
         scrHeight = h;
 
+        imgJogador = new Bmp("img/gremio_f.bmp");
+        imgJogador->resize(40, 40);
+        imgInimigo = new Bmp("img/inter_f.bmp");
+        imgInimigo->resize(30,30);
+
         inimigos.clear();           
         disparosJogador.clear();   
         disparosInimigos.clear();  
+        animacoes.clear();
         pontuacao = 0;              
 
         frames = new Frames();
@@ -43,7 +82,6 @@ public:
         gameOver = false;
         jogador.ativo = true;
         fpsReal = 30.0f;
-
 
         // Cenário 10x a altura da janela
         larguraCenario = w;
@@ -53,23 +91,21 @@ public:
         jogador.x = w / 2.0f - (jogador.width / 2.0f);
         jogador.y = 50.0f; // Perto da base
 
-        // Instancia os Inimigos FORA da visão inicial (descendo)
-        // Começaremos a espalhar a partir de h + 100 até o topo do cenário (alturaCenario)
-        for (int i = 0; i < 40; i++) {
-            Inimigo ini;
+        // Configuração do fluxo das ondas
+        float posY = h + 250.0f;
+        float espacoEntreOndas = 350.0f;
 
-            float variacaoX = 30.0f;
-            float variacaoY = 40.0f;
+        // Bloco 1: 15 Inimigos
+        gerarOnda(15, posY);
+        posY += espacoEntreOndas;
 
-            float baseX = 50.0f + (i % 6) * 90.0f;
-            float baseY = h + 100.0f + (i / 6) * 130.0f;
+        // Bloco 2: 30 Inimigos
+        gerarOnda(30, posY);
+        posY += (espacoEntreOndas);
 
-            ini.x = baseX + (rand() % (int)(variacaoX * 2)) - variacaoX;
-            ini.y = baseY + (rand() % (int)(variacaoY * 2)) - variacaoY;
-            ini.cronometroTiro = (rand() % 100) / 100.0f * ini.tempoRecarga;
-            ini.tempoRecarga = 1.0f + (rand() % 200) / 100.0f; // Algo entre 1.0 e 3.0 segundos
-            inimigos.push_back(ini);
-        }
+        // Bloco 3: 50 Inimigos
+        gerarOnda(50, posY);
+        posY += (espacoEntreOndas);
     }
 
     void executarLoop() {
@@ -138,7 +174,7 @@ public:
             for (int i = 0; i < inimigos.size(); i++) {
                 if (!inimigos[i].ativo) continue;
 
-                if (inimigos[i].y < scrHeight && inimigos[i].checaColisao(disparosJogador[t].x, disparosJogador[t].y, disparosJogador[t].width, disparosJogador[t].height)) {
+                if (inimigos[i].y < scrHeight && inimigos[i].checaColisaoCircular(disparosJogador[t].x, disparosJogador[t].y)) {
                     animacoes.push_back(Animacao(inimigos[i].x, inimigos[i].y));
                     inimigos[i].ativo = false;      // Mata Inimigo
                     disparosJogador[t].ativo = false; // Destrói bala
@@ -147,14 +183,12 @@ public:
                 }
             }
         }
-
-        // 2. Checa se algum TIRO DO INIMIGO acertou o JOGADOR
         if (jogador.ativo) {
             for (int i = 0; i < inimigos.size(); i++) {
                 for (int t = 0; t < disparosInimigos.size(); t++) {
                     if (!disparosInimigos[t].ativo) continue;
 
-                    if (jogador.checaColisao(disparosInimigos[t].x, disparosInimigos[t].y, disparosInimigos[t].width, disparosInimigos[t].height)) {
+                    if (jogador.checaColisaoCircular(disparosInimigos[t].x, disparosInimigos[t].y)) {// 2. Checa se algum TIRO DO INIMIGO acertou o JOGADOR
                         disparosInimigos[t].ativo = false;
                         vidas--;
 
@@ -166,15 +200,27 @@ public:
                         
                     }
                 }
+                if (!inimigos[i].ativo) continue;
+                if (jogador.colideCom(inimigos[i].x, inimigos[i].y, inimigos[i].raio)) {// 3. Checa se algum inimigo colidiu com o jogador
+                    inimigos[i].ativo = false;
+                    vidas--;
+
+                    if (vidas <= 0) {
+                        jogador.ativo = false; // Game Over
+                        gameOver = true;
+                    }
+                }
             }
         }
     }
 
     void desenhar() {
         jogador.desenhar();
+        imgJogador->render(jogador.x, jogador.y);
 
         for (int i = 0; i < inimigos.size(); i++) {
             inimigos[i].desenhar();
+            imgInimigo->render(inimigos[i].x, inimigos[i].y);
         }
 
         // Desenha todos os projéteis centralizados
