@@ -37,7 +37,7 @@ int mouseX, mouseY; //variaveis globais do mouse para poder exibir dentro da ren
 int raio = 60;
 float passo = 2 * PI / 12;
 int direcaoTeclado = -1;
-bool pressTeclado = false;
+bool movimento = false;
 Jogo jogo;
 //funcao chamada continuamente. Deve-se controlar o que desenhar por meio de variaveis globais
 //Todos os comandos para desenho na canvas devem ser chamados dentro da render().
@@ -259,7 +259,7 @@ void drawSpline() {
 void render()
 {
 	CV::clear(0, 0, 0);
-	if (pressTeclado) {
+	if (movimento) {
 		if (direcaoTeclado == 0) jogo.jogador.direcaoMovimento.set(-1, 0); // Esq
 		if (direcaoTeclado == 2) jogo.jogador.direcaoMovimento.set(1, 0);  // Dir
 	}
@@ -274,7 +274,7 @@ void render()
 
 
 	//CV::translate(screenWidth / 2, screenHeight / 2);
-	//drawBlending();
+	//drawBlending(); 
 	//drawControlPoints();
 	//drawBezier();
 
@@ -305,25 +305,31 @@ void keyboard(int key)
    {
       opcao = key;
    }
-   pressTeclado = true;
    switch (key) {
    case 27://Esq
 	   exit(0);
 	   break;
    case 200://esquerda
 	   direcaoTeclado = 0;
+	   movimento = true;
 	   break;
    case 201://cima
 	   direcaoTeclado = 1;
+	   movimento = true;
 	   break;
    case 202://direita
 	   direcaoTeclado = 2;
+	   movimento = true;
 	   break;
    case 203://baixo
 	   direcaoTeclado = 3;
+	   movimento = true;
 	   break;
    case 114://r = reinicio
-	   jogo.inicializar(screenWidth, screenHeight);
+	   if (jogo.gameOver) {
+		  jogo.inicializar(screenWidth, screenHeight);
+	   }
+			
    default:
 	   direcaoTeclado = -1;
 	   break;
@@ -337,7 +343,9 @@ void keyboard(int key)
 //funcao chamada toda vez que uma tecla for liberada
 void keyboardUp(int key)
 {
-	pressTeclado = false;
+	if (key >= 200 && key < 204) {
+		movimento = false;
+	}
 	if (key == 32) {
 		jogo.jogador.atirando = false; // Desliga o gatilho
 	}

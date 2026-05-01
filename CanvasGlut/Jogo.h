@@ -9,6 +9,7 @@
 #include "Animacao.h"
 #include "Bmp.h"
 
+
 class Jogo {
 public:
     int scrWidth, scrHeight;
@@ -235,25 +236,50 @@ public:
             animacoes[i].desenhar();
         }
 
-        CV::color(1); 
+        float largAvis = 110;
+        float altAvis = 20;
+        float espaco = 5;
+
+        float posXPlacar = 13;
+        float posYPlacar = 15;
+        CV::color(1);
+        CV::rectFill(posXPlacar, posYPlacar, posXPlacar + largAvis, posYPlacar + altAvis);
+        CV::color(0); 
         char buffer[30];
         snprintf(buffer, sizeof(buffer), "Placar: %d", pontuacao);
-        CV::text(20, 20, buffer); 
+        CV::text(posXPlacar + espaco, posYPlacar + espaco, buffer);
 
         // VIDAS 
+        float posXVidas = 250;
+        float posYVidas = 15;
         char bufferVidas[30];
         snprintf(bufferVidas, sizeof(bufferVidas), "Vidas: %d", vidas);
-        CV::text(150, 20, bufferVidas); 
+        CV::color(1);
+        CV::rectFill(posXVidas, posYVidas, posXVidas + largAvis - 20, posYVidas + altAvis);
+        CV::color(0);
+        CV::text(posXVidas + espaco, posYVidas + espaco, bufferVidas);
 
+        // FPS
+        float posXFPS = scrWidth - 120;
+        float posYFPS = 15;
         char bufferFPS[20];
         snprintf(bufferFPS, sizeof(bufferFPS), "FPS: %.1f", fpsReal);
-        CV::text(scrWidth - 120, 20, bufferFPS);
+        CV::color(1);
+        CV::rectFill(posXFPS, posYFPS, posXFPS + largAvis, posYFPS + altAvis);
+        CV::color(0);
+        CV::text(posXFPS + espaco, posYFPS + espaco, bufferFPS);
 
         if (gameOver) {
-            CV::color(2); // Vermelho
-            CV::text(scrWidth / 2 - 50, scrHeight / 2, "GAME OVER");
+            float posXaviso = scrWidth / 2 - 130;
+            float posYaviso = scrHeight / 2 - 30;
+            float alturaAviso = 50;
+            float larguraAviso = 290;
             CV::color(1);
-            CV::text(scrWidth / 2 - 80, scrHeight / 2 - 20, "Pressione R para reiniciar");
+            CV::rectFill(posXaviso, posYaviso, posXaviso + larguraAviso, posYaviso + alturaAviso);
+            CV::color(2); 
+            CV::text(posXaviso + 80, posYaviso + 30, "GAME OVER");
+            CV::color(0);
+            CV::text(posXaviso + 20, posYaviso + 10, "Pressione R para reiniciar");
         }
     }
 };
