@@ -6,7 +6,7 @@
 #include "Jogador.h"
 #include "Inimigo.h"
 #include "Frames.h"
-
+#include "Animacao.h"
 
 class Jogo {
 public:
@@ -25,6 +25,7 @@ public:
     std::vector<Projetil> disparosJogador;
     std::vector<Projetil> disparosInimigos;
 
+    std::vector<Animacao> animacoes;
     Jogo() {
     }
 
@@ -122,6 +123,11 @@ public:
                 i--;
             }
         }
+
+        // 3. Atualiza animacoes
+        for (int i = 0; i < animacoes.size(); i++) {
+            animacoes[i].atualizar(dt);
+        }
     }
 
     void checarColisoes() {
@@ -133,6 +139,7 @@ public:
                 if (!inimigos[i].ativo) continue;
 
                 if (inimigos[i].y < scrHeight && inimigos[i].checaColisao(disparosJogador[t].x, disparosJogador[t].y, disparosJogador[t].width, disparosJogador[t].height)) {
+                    animacoes.push_back(Animacao(inimigos[i].x, inimigos[i].y));
                     inimigos[i].ativo = false;      // Mata Inimigo
                     disparosJogador[t].ativo = false; // Destrói bala
                     pontuacao++;
@@ -172,10 +179,14 @@ public:
 
         // Desenha todos os projéteis centralizados
         for (int i = 0; i < disparosJogador.size(); i++) {
-            disparosJogador[i].desenhar(2); // Cor 2 para os tiros do jogador
+            disparosJogador[i].desenhar(2); 
         }
         for (int i = 0; i < disparosInimigos.size(); i++) {
-            disparosInimigos[i].desenhar(2); // Cor 2 para os tiros dos inimigos
+            disparosInimigos[i].desenhar(2); 
+        }
+
+        for (int i = 0; i < animacoes.size(); i++) {
+            animacoes[i].desenhar();
         }
 
         CV::color(1); 
