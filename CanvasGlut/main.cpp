@@ -29,7 +29,7 @@
 #pragma warning(disable:4996)
 
 //largura e altura inicial da tela . Alteram com o redimensionamento de tela.
-int screenWidth = 600, screenHeight = 600;
+int screenWidth = 1000, screenHeight = 700;
 
 
 int opcao  = 50;//variavel global para selecao do que sera exibido na canvas.
@@ -259,6 +259,7 @@ void drawSpline() {
 void render()
 {
 	CV::clear(0, 0, 0);
+
 	if (movimento) {
 		if (direcaoTeclado == 0) jogo.jogador.direcaoMovimento.set(-1, 0); // Esq
 		if (direcaoTeclado == 2) jogo.jogador.direcaoMovimento.set(1, 0);  // Dir

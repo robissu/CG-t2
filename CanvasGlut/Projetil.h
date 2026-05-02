@@ -54,7 +54,7 @@ public:
         float t1 = 3 * t * (1 - t) * (1 - t);
         float t2 = 3 * t * t * (1 - t);
         float t3 = t * t * t;
-
+        
         Vector2 ponto = (pts[0] * t0) + (pts[1] * t1) + (pts[2] * t2) + (pts[3] * t3);
         Vector2 novaDirecao = ponto - old;
         

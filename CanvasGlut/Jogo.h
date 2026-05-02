@@ -17,6 +17,9 @@ public:
     int pontuacao;
     int vidas;
     bool gameOver;
+    int ondas;
+    float proxOnda;
+    float interInit;
     // Controle de FPS / Delta Time
     Frames* frames;
     float fpsReal;
@@ -31,37 +34,51 @@ public:
     std::vector<Projetil> disparosInimigos;
 
     std::vector<Animacao> animacoes;
+
+    std::vector<Vector2> estrelas;
+    float velEstrelas;
+
     Jogo() {
     }
 
-    void gerarOnda(int quantidade, float& offsetY) {
-        float variacaoX = 30.0f;
-        float variacaoY = 40.0f;
-        int colunas = 6;
+void gerarOnda(int quantidade, float& offsetY) {
+    // Calcula quantas colunas cabem na tela (ex: um inimigo a cada 100 pixels)
+    int colunas = scrWidth / 100; 
+    if (colunas < 2) colunas = 2; // Garante pelo menos 2 colunas para não ficarem em fila única
 
-        for (int i = 0; i < quantidade; i++) {
-            Inimigo ini;
+    // Define o espaço horizontal de cada "trilha" de inimigos
+    float espacamentoX = (float)scrWidth / colunas;
+    
+    // A variação agora é proporcional ao espaço disponível para não haver sobreposição excessiva
+    float variacaoX = espacamentoX * 0.3f; 
+    float variacaoY = 40.0f;
 
-            float baseX = 50.0f + (i % colunas) * 90.0f;
-            float baseY = offsetY + (i / colunas) * 130.0f;
+    for (int i = 0; i < quantidade; i++) {
+        Inimigo ini;
 
-            ini.x = baseX + (rand() % (int)(variacaoX * 2)) - variacaoX;
-            ini.y = baseY + (rand() % (int)(variacaoY * 2)) - variacaoY;
+        // Calcula a posição base centralizada na coluna
+        float baseX = (i % colunas) * espacamentoX + (espacamentoX / 2.0f);
+        float baseY = offsetY + (i / colunas) * 130.0f;
 
-            // tempo de recarga entre 1.0 e 3.0 segundos
-            ini.tempoRecarga = 1.0f + (rand() % 200) / 100.0f;
+        // Aplica a variação aleatória
+        ini.x = baseX + (rand() % (int)(variacaoX * 2)) - variacaoX;
+        ini.y = baseY + (rand() % (int)(variacaoY * 2)) - variacaoY;
 
-            // Mantém os inimigos prontos para atirar assim que aparecem
-            ini.cronometroTiro = (0.8f + (rand() % 20) / 100.0f) * ini.tempoRecarga;
+        // Clamp de segurança: evita que inimigos nasçam fora da tela lateralmente
+        if (ini.x < 30) ini.x = 30;
+        if (ini.x > scrWidth - 30) ini.x = scrWidth - 30;
 
-            inimigos.push_back(ini);
-        }
+        // Configurações de tiro permanecem iguais
+        ini.tempoRecarga = 1.0f + (rand() % 200) / 100.0f;
+        ini.cronometroTiro = (0.8f + (rand() % 20) / 100.0f) * ini.tempoRecarga;
 
-        // Cálculo exato de linhas para evitar vácuos excessivos
-        int linhas = (quantidade + colunas - 1) / colunas;
-        offsetY += linhas * 130.0f;
+        inimigos.push_back(ini);
     }
 
+    // O offsetY continua subindo conforme o número de linhas geradas[cite: 8]
+    int linhas = (quantidade + colunas - 1) / colunas;
+    offsetY += linhas * 130.0f;
+}
 
     void inicializar(int w, int h) {
         scrWidth = w;
@@ -72,6 +89,7 @@ public:
         imgInimigo = new Bmp("img/inter_f.bmp");
         imgInimigo->resize(30,30);
 
+        estrelas.clear();
         inimigos.clear();           
         disparosJogador.clear();   
         disparosInimigos.clear();  
@@ -93,20 +111,16 @@ public:
         jogador.y = 50.0f; // Perto da base
 
         // Configuração do fluxo das ondas
-        float posY = h + 250.0f;
-        float espacoEntreOndas = 350.0f;
+        proxOnda = h + 250.0f;
+        interInit = 15;
+        ondas = 1;
+        gerarOnda(interInit, proxOnda);
 
-        // Bloco 1: 15 Inimigos
-        gerarOnda(15, posY);
-        posY += espacoEntreOndas;
-
-        // Bloco 2: 30 Inimigos
-        gerarOnda(30, posY);
-        posY += (espacoEntreOndas);
-
-        // Bloco 3: 50 Inimigos
-        gerarOnda(50, posY);
-        posY += (espacoEntreOndas);
+        velEstrelas = 50.0f;
+        for (int i = 0; i < 100; i++) {
+            Vector2 pos(rand() % w, rand() % h);
+            estrelas.push_back(pos);
+        }
     }
 
     void executarLoop() {
@@ -131,6 +145,44 @@ public:
     }
 
     void atualizarLogica(float dt) {
+        if (gameOver)
+            return;
+
+        for (int i = 0; i < estrelas.size(); i++) {
+            // Subtraímos a velocidade do componente Y do Vector2
+            estrelas[i].y -= velEstrelas * dt;
+
+            // Reset ao sair da tela
+            if (estrelas[i].y < 0) {
+                estrelas[i].y = scrHeight;
+                estrelas[i].x = rand() % scrWidth;
+            }
+        }
+
+
+        float menorY = 9999.0f;
+        bool semInimigos = inimigos.empty();
+        for (int i = 0; i < inimigos.size(); i++) {
+            if (inimigos[i].y < menorY) {
+                menorY = inimigos[i].y;
+            }
+        }
+
+        // CONDIÇÕES PARA NOVA ONDA:
+        // 1. Todos os inimigos foram derrotados (vetor vazio).
+        // 2. O último inimigo (o que tem menor Y) está perto do limite inferior (ex: y < 150).
+        if (semInimigos || menorY < 150.0f) {
+            ondas++;
+
+            // Spawnamos a nova onda bem acima da tela para dar tempo ao jogador
+            proxOnda = scrHeight + 250.0f;
+
+            // Dificuldade progressiva: base + (ondas * incremento)
+            int qtdInimigosNovaOnda = interInit + (ondas * 5);
+
+            gerarOnda(qtdInimigosNovaOnda, proxOnda);
+        }
+
         jogador.atualizar(dt, scrWidth, alturaCenario, disparosJogador);
 
         for (int i = 0; i < inimigos.size(); i++) {
@@ -216,6 +268,12 @@ public:
     }
 
     void desenhar() {
+        // Desenha as estrelas antes de tudo
+        CV::color(1, 1, 1); // Branco
+        for (int i = 0; i < estrelas.size(); i++) {     
+            CV::point(estrelas[i].x, estrelas[i].y);
+        }
+
         jogador.desenhar();
         imgJogador->render(jogador.x, jogador.y);
 
@@ -250,7 +308,7 @@ public:
         CV::text(posXPlacar + espaco, posYPlacar + espaco, buffer);
 
         // VIDAS 
-        float posXVidas = 250;
+        float posXVidas = (scrWidth / 2) - jogador.width;
         float posYVidas = 15;
         char bufferVidas[30];
         snprintf(bufferVidas, sizeof(bufferVidas), "Vidas: %d", vidas);
