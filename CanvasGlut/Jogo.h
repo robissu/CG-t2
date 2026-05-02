@@ -41,44 +41,44 @@ public:
     Jogo() {
     }
 
-void gerarOnda(int quantidade, float& offsetY) {
-    // Calcula quantas colunas cabem na tela (ex: um inimigo a cada 100 pixels)
-    int colunas = scrWidth / 100; 
-    if (colunas < 2) colunas = 2; // Garante pelo menos 2 colunas para não ficarem em fila única
+    void gerarOnda(int quantidade, float& offsetY) {
+        // Calcula quantas colunas cabem na tela (ex: um inimigo a cada 100 pixels)
+        int colunas = scrWidth / 100; 
+        if (colunas < 2) colunas = 2; // Garante pelo menos 2 colunas para não ficarem em fila única
 
-    // Define o espaço horizontal de cada "trilha" de inimigos
-    float espacamentoX = (float)scrWidth / colunas;
+        // Define o espaço horizontal de cada "trilha" de inimigos
+        float espacamentoX = (float)scrWidth / colunas;
     
-    // A variação agora é proporcional ao espaço disponível para não haver sobreposição excessiva
-    float variacaoX = espacamentoX * 0.3f; 
-    float variacaoY = 40.0f;
+        // A variação agora é proporcional ao espaço disponível para não haver sobreposição excessiva
+        float variacaoX = espacamentoX * 0.3f; 
+        float variacaoY = 40.0f;
 
-    for (int i = 0; i < quantidade; i++) {
-        Inimigo ini;
+        for (int i = 0; i < quantidade; i++) {
+            Inimigo ini;
 
-        // Calcula a posição base centralizada na coluna
-        float baseX = (i % colunas) * espacamentoX + (espacamentoX / 2.0f);
-        float baseY = offsetY + (i / colunas) * 130.0f;
+            // Calcula a posição base centralizada na coluna
+            float baseX = (i % colunas) * espacamentoX + (espacamentoX / 2.0f);
+            float baseY = offsetY + (i / colunas) * 130.0f;
 
-        // Aplica a variação aleatória
-        ini.x = baseX + (rand() % (int)(variacaoX * 2)) - variacaoX;
-        ini.y = baseY + (rand() % (int)(variacaoY * 2)) - variacaoY;
+            // Aplica a variação aleatória
+            ini.x = baseX + (rand() % (int)(variacaoX * 2)) - variacaoX;
+            ini.y = baseY + (rand() % (int)(variacaoY * 2)) - variacaoY;
 
-        // Clamp de segurança: evita que inimigos nasçam fora da tela lateralmente
-        if (ini.x < 30) ini.x = 30;
-        if (ini.x > scrWidth - 30) ini.x = scrWidth - 30;
+            // Clamp de segurança: evita que inimigos nasçam fora da tela lateralmente
+            if (ini.x < 30) ini.x = 30;
+            if (ini.x > scrWidth - 30) ini.x = scrWidth - 30;
 
-        // Configurações de tiro permanecem iguais
-        ini.tempoRecarga = 1.0f + (rand() % 200) / 100.0f;
-        ini.cronometroTiro = (0.8f + (rand() % 20) / 100.0f) * ini.tempoRecarga;
+            // Configurações de tiro permanecem iguais
+            ini.tempoRecarga = 1.0f + (rand() % 200) / 100.0f;
+            ini.cronometroTiro = (0.8f + (rand() % 20) / 100.0f) * ini.tempoRecarga;
 
-        inimigos.push_back(ini);
+            inimigos.push_back(ini);
+        }
+
+        // O offsetY continua subindo conforme o número de linhas geradas[cite: 8]
+        int linhas = (quantidade + colunas - 1) / colunas;
+        offsetY += linhas * 130.0f;
     }
-
-    // O offsetY continua subindo conforme o número de linhas geradas[cite: 8]
-    int linhas = (quantidade + colunas - 1) / colunas;
-    offsetY += linhas * 130.0f;
-}
 
     void inicializar(int w, int h) {
         scrWidth = w;
