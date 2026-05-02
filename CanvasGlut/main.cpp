@@ -37,7 +37,8 @@ int mouseX, mouseY; //variaveis globais do mouse para poder exibir dentro da ren
 int raio = 60;
 float passo = 2 * PI / 12;
 int direcaoTeclado = -1;
-bool movimento = false;
+bool movL = false;
+bool movR = false;
 Jogo jogo;
 //funcao chamada continuamente. Deve-se controlar o que desenhar por meio de variaveis globais
 //Todos os comandos para desenho na canvas devem ser chamados dentro da render().
@@ -260,9 +261,12 @@ void render()
 {
 	CV::clear(0, 0, 0);
 
-	if (movimento) {
-		if (direcaoTeclado == 0) jogo.jogador.direcaoMovimento.set(-1, 0); // Esq
-		if (direcaoTeclado == 2) jogo.jogador.direcaoMovimento.set(1, 0);  // Dir
+	if (movL) {
+		jogo.jogador.direcaoMovimento.set(-1, 0); // Esq
+  
+	}
+	else if (movR) {
+		jogo.jogador.direcaoMovimento.set(1, 0);// Dir
 	}
 	else {
 		jogo.jogador.direcaoMovimento.set(0, 0); // Para o jogador
@@ -312,19 +316,17 @@ void keyboard(int key)
 	   break;
    case 200://esquerda
 	   direcaoTeclado = 0;
-	   movimento = true;
+	   movL = true;
 	   break;
    case 201://cima
 	   direcaoTeclado = 1;
-	   movimento = true;
 	   break;
    case 202://direita
 	   direcaoTeclado = 2;
-	   movimento = true;
+	   movR = true;
 	   break;
    case 203://baixo
 	   direcaoTeclado = 3;
-	   movimento = true;
 	   break;
    case 114://r = reinicio
 	   if (jogo.gameOver) {
@@ -344,8 +346,11 @@ void keyboard(int key)
 //funcao chamada toda vez que uma tecla for liberada
 void keyboardUp(int key)
 {
-	if (key >= 200 && key < 204) {
-		movimento = false;
+	if (key == 200) {
+		movL = false;
+	}
+	if (key == 202) {
+		movR = false;
 	}
 	if (key == 32) {
 		jogo.jogador.atirando = false; // Desliga o gatilho

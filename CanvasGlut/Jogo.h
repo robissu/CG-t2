@@ -160,18 +160,18 @@ void gerarOnda(int quantidade, float& offsetY) {
         }
 
 
-        float menorY = 9999.0f;
+        float maiorY = 0.0f;
         bool semInimigos = inimigos.empty();
         for (int i = 0; i < inimigos.size(); i++) {
-            if (inimigos[i].y < menorY) {
-                menorY = inimigos[i].y;
+            if (inimigos[i].y > maiorY) {
+                maiorY = inimigos[i].y;
             }
         }
 
         // CONDIÇÕES PARA NOVA ONDA:
         // 1. Todos os inimigos foram derrotados (vetor vazio).
         // 2. O último inimigo (o que tem menor Y) está perto do limite inferior (ex: y < 150).
-        if (semInimigos || menorY < 150.0f) {
+        if (semInimigos || maiorY < 0.0f) {
             ondas++;
 
             // Spawnamos a nova onda bem acima da tela para dar tempo ao jogador
